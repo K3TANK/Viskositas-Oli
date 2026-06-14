@@ -6,6 +6,7 @@
     <title>Monitoring Viskositas Oil - Hukum Stokes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans p-4 md:p-8 flex justify-center items-center min-h-screen">
 
@@ -43,15 +44,26 @@
                 </div>
 
                 <div class="border-2 border-blue-400 rounded-xl p-3 bg-white shadow-sm flex-1 flex flex-col min-h-[320px]">
-                    <h3 class="text-[#0b54b2] text-center font-bold text-xs uppercase mb-2 tracking-wider">
-                        Tabel Rekam Data Tiap Pengujian
-                    </h3>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-2 gap-2">
+                        <h3 class="text-[#0b54b2] font-bold text-xs uppercase tracking-wider">
+                            Tabel Rekam Data Tiap Pengujian
+                        </h3>
+                        <button id="btn_export" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1.5 shadow transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span>Export ke Excel</span>
+                        </button>
+                    </div>
+                    
                     <div class="overflow-y-auto max-h-[300px] border border-gray-200 rounded-lg flex-1">
-                        <table class="w-full text-left text-xs border-collapse">
+                        <table id="tabel_seluruh_data" class="w-full text-left text-xs border-collapse">
                             <thead class="bg-gray-100 text-gray-700 uppercase sticky top-0 border-b border-gray-200 text-[10px]">
                                 <tr>
                                     <th class="p-2 text-center">No</th>
-                                    <th class="p-2">Waktu Uji</th>
+                                    <th class="p-2">Waktu Masuk (S1)</th>
+                                    <th class="p-2">Waktu Keluar (S2)</th>
+                                    <th class="p-2 text-center">Suhu (°C)</th>
                                     <th class="p-2 text-center">Selisih (t)</th>
                                     <th class="p-2 text-center">Kecepatan (v)</th>
                                     <th class="p-2 text-center text-amber-600 bg-amber-50">Viskositas (µ)</th>
@@ -59,7 +71,7 @@
                             </thead>
                             <tbody id="tabel_pengujian" class="divide-y divide-gray-200 text-gray-600 font-medium">
                                 <tr id="no_data_row">
-                                    <td colspan="5" class="p-8 text-center text-gray-400 italic">Belum ada data pengujian masuk...</td>
+                                    <td colspan="7" class="p-8 text-center text-gray-400 italic">Belum ada data pengujian masuk...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -72,7 +84,7 @@
                 
                 <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 shadow-inner">
                     <h3 class="text-gray-700 font-bold text-xs uppercase mb-3 tracking-wider flex items-center">
-                        ⚙️ Parameter Nilai Tetap (Hukum Stokes)
+                        ⚙️ Parameter Nilai Tetap & Input Manual
                     </h3>
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <div>
@@ -91,9 +103,13 @@
                             <label class="block text-gray-500 mb-1">ρ Cairan Oli [kg/m³]:</label>
                             <input type="number" id="param_rho_oli" value="890" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
-                        <div class="col-span-2">
+                        <div>
                             <label class="block text-gray-500 mb-1">Jarak Antar Sensor [meter]:</label>
                             <input type="number" id="param_jarak" step="0.01" value="0.1" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-blue-600 font-bold mb-1">Suhu Oli Manual (°C):</label>
+                            <input type="number" id="param_suhu" step="0.1" value="25.0" class="w-full border border-blue-400 bg-blue-50 rounded px-2 py-1 font-bold text-blue-700 focus:outline-blue-600">
                         </div>
                     </div>
                 </div>
@@ -119,8 +135,13 @@
 
         </div>
         
-        <div class="bg-gray-50 px-6 py-2 text-right text-xs text-gray-400 border-t border-gray-100">
-            Realtime Database Connection Status: <span class="text-green-500 font-bold">🟢 Connected</span>
+        <div class="bg-gray-50 px-6 py-2 flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-gray-400 border-t border-gray-100">
+            <div>
+                Hardware Status: <span id="esp32_status" class="text-red-500 font-bold">🔴 ESP32 Disconnected</span>
+            </div>
+            <div>
+                Realtime Database Connection Status: <span class="text-green-500 font-bold">🟢 Connected</span>
+            </div>
         </div>
     </div>
 
@@ -128,7 +149,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD_N4MTq20AM-AiSVw2ztSE8HSuBCfAyTc",
             authDomain: "skripsi-2026-5d0da.firebaseapp.com",
@@ -143,7 +163,8 @@
         const db = getDatabase(app);
 
         let nomorPengujian = 0;
-        let lastTimestamp1 = null; 
+        let isDataSaved = false; 
+        let esp32Timeout = null;
 
         // --- CHART CONFIGURATION (Chart.js) ---
         const ctx = document.getElementById('viscosityChart').getContext('2d');
@@ -179,6 +200,25 @@
             return d.toLocaleTimeString('id-ID');
         }
 
+        // --- DETEKSI KONEKSI ESP32 (HEARTBEAT) ---
+        const heartbeatRef = ref(db, 'data/heartbeat');
+        onValue(heartbeatRef, (snapshot) => {
+            const espStatus = document.getElementById('esp32_status');
+            const val = snapshot.val();
+            
+            if (val === 1) {
+                espStatus.className = "text-green-500 font-bold";
+                espStatus.innerText = "🟢 ESP32 Connected";
+
+                clearTimeout(esp32Timeout);
+
+                esp32Timeout = setTimeout(() => {
+                    espStatus.className = "text-red-500 font-bold";
+                    espStatus.innerText = "🔴 ESP32 Disconnected";
+                }, 5000);
+            }
+        });
+
         // --- REALTIME DATA UPDATE & STOKES CALCULATION ---
         const dataRef = ref(db, 'data');
         onValue(dataRef, (snapshot) => {
@@ -186,26 +226,20 @@
             if (data) {
                 const w1 = data.waktu1_utc || 0;
                 const w2 = data.waktu2_utc || 0;
-                
-                // Menggunakan selisih_utc murni positif dari Firebase
                 const selisih = data.selisih_utc !== undefined ? data.selisih_utc : 0;
 
-                // Tampilkan data waktu saat ini di panel atas
-                document.getElementById('waktu1_display').innerText = `TIME: ${w1} SECONDS`;
-                document.getElementById('waktu2_display').innerText = `TIME: ${w2} SECONDS`;
+                document.getElementById('waktu1_display').innerText = w1 > 0 ? `TIME: ${w1} SECONDS` : "TIME: -- SECONDS";
+                document.getElementById('waktu2_display').innerText = w2 > 0 ? `TIME: ${w2} SECONDS` : "TIME: -- SECONDS";
                 
-                // Ambil nilai variabel dari elemen input HTML parameter
                 const r = parseFloat(document.getElementById('param_r').value) || 0.005;
                 const g = parseFloat(document.getElementById('param_g').value) || 9.8;
                 const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 0;
                 const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 0;
                 const s = parseFloat(document.getElementById('param_jarak').value) || 0.1;
+                const suhu = parseFloat(document.getElementById('param_suhu').value) || 25.0;
 
-                // Hitung Kecepatan v = s / t
-                // Jika selisih 0, kecepatan di-set 0 untuk menghindari nilai pembagian tak terhingga (infinity)
                 const v = selisih > 0 ? (s / selisih) : 0;
 
-                // Hitung Viskositas Dinamik Menggunakan Rumus Jurnal Stokes
                 let mu = 0;
                 if (v > 0) {
                     const pembilang = 2 * Math.pow(r, 2) * g * (rho_bola - rho_oli);
@@ -213,12 +247,12 @@
                     mu = pembilang / penyebut;
                 }
 
-                // Tampilkan hasil viskositas terhitung ke Big Box utama (pembulatan 4 desimal)
-                document.getElementById('selisih_display').innerText = mu.toFixed(4);
+                if (mu > 0) {
+                    document.getElementById('selisih_display').innerText = mu.toFixed(4);
+                }
 
-                // LOGIKA PENCATATAN BARIS TABEL
-                if (w1 !== 0 && w1 !== lastTimestamp1) {
-                    lastTimestamp1 = w1; 
+                if (w1 > 0 && w2 > 0 && selisih > 0 && !isDataSaved) {
+                    isDataSaved = true; 
                     nomorPengujian++;
 
                     const noDataRow = document.getElementById('no_data_row');
@@ -228,23 +262,49 @@
                     const newRow = document.createElement('tr');
                     newRow.className = "hover:bg-gray-50 border-b border-gray-100 transition-colors";
                     
-                    // Isi baris tabel dengan rekam data spesifik saat pengujian ini terjadi
                     newRow.innerHTML = `
                         <td class="p-2 text-center font-bold text-gray-400">${nomorPengujian}</td>
-                        <td class="p-2">${formatJam(w1)} <span class="text-[9px] text-gray-400 block">Raw: ${w1}s</span></td>
-                        <td class="p-2 text-center font-semibold">${selisih} s</td>
+                        <td class="p-2 font-medium text-gray-700">${formatJam(w1)} <span class="text-[9px] text-gray-400 block font-normal">Raw: ${w1}s</span></td>
+                        <td class="p-2 font-medium text-gray-700">${formatJam(w2)} <span class="text-[9px] text-gray-400 block">Raw: ${w2}s</span></td>
+                        <td class="p-2 text-center font-semibold text-blue-600">${suhu.toFixed(1)} °C</td>
+                        <td class="p-2 text-center font-semibold text-gray-700">${selisih} s</td>
                         <td class="p-2 text-center text-blue-600">${v.toFixed(3)} m/s</td>
                         <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} kg·m/s</td>
                     `;
                     
                     tbody.insertBefore(newRow, tbody.firstChild);
 
-                    // Update struktur data grafik riwayat pengujian
                     viscosityChart.data.datasets[0].data.shift();
                     viscosityChart.data.datasets[0].data.push(mu.toFixed(4));
                     viscosityChart.update();
                 }
+
+                if (w1 === 0 && w2 === 0 && selisih === 0) {
+                    isDataSaved = false;
+                }
             }
+        });
+
+        // ==================================================
+        // TAMBAHAN: FUNGSI UTK EXPORT DATA KE EXCEL (.XLSX)
+        // ==================================================
+        document.getElementById('btn_export').addEventListener('click', () => {
+            // Cek apakah tabel masih kosong atau hanya berisi baris default "Belum ada data"
+            if (document.getElementById('no_data_row')) {
+                alert('Gagal Export: Belum ada data pengujian yang terekam!');
+                return;
+            }
+
+            // Membaca tabel HTML dan mengubahnya menjadi lembar kerja (Worksheet)
+            const tableElement = document.getElementById('tabel_seluruh_data');
+            const wb = XLSX.utils.table_to_book(tableElement, { sheet: "Data Viskositas" });
+
+            // Mengenerate nama file berdasarkan tanggal saat ini
+            const tgl = new Date().toISOString().slice(0,10);
+            const namaFile = `Log_Viskositas_Stokes_${tgl}.xlsx`;
+
+            // Proses unduhan file langsung ke komputer pengguna
+            XLSX.writeFile(wb, namaFile);
         });
     </script>
 </body>
