@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Viskositas Oil - Hukum Stokes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans p-4 md:p-8 flex justify-center items-center min-h-screen">
+
+    <div class="w-full max-w-6xl bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
+        
+        <div class="bg-[#0b54b2] p-4 flex items-center justify-center space-x-4">
+            <div class="w-8 h-10 bg-amber-500 rounded-b-full rounded-tl-full rotate-45 transform origin-center border-2 border-white shadow-md"></div>
+            <h1 class="text-white text-xl md:text-3xl font-extrabold tracking-wider uppercase text-center">
+                Monitoring Viskositas Oil (Hukum Stokes)
+            </h1>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-7 flex flex-col space-y-4">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="bg-[#0b54b2] text-white text-center text-xs font-bold py-2 px-1 rounded uppercase tracking-wider shadow-sm">
+                            Sensor Proximity 1
+                        </div>
+                        <div id="waktu1_display" class="border-2 border-[#0b54b2] text-[#0b54b2] text-center font-bold py-2 rounded text-sm bg-blue-50/50">
+                            TIME: -- SECONDS
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="bg-[#0b54b2] text-white text-center text-xs font-bold py-2 px-1 rounded uppercase tracking-wider shadow-sm">
+                            Sensor Proximity 2
+                        </div>
+                        <div id="waktu2_display" class="border-2 border-[#0b54b2] text-[#0b54b2] text-center font-bold py-2 rounded text-sm bg-blue-50/50">
+                            TIME: -- SECONDS
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-2 border-blue-400 rounded-xl p-3 bg-white shadow-sm flex-1 flex flex-col min-h-[320px]">
+                    <h3 class="text-[#0b54b2] text-center font-bold text-xs uppercase mb-2 tracking-wider">
+                        Tabel Rekam Data Tiap Pengujian
+                    </h3>
+                    <div class="overflow-y-auto max-h-[300px] border border-gray-200 rounded-lg flex-1">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-gray-100 text-gray-700 uppercase sticky top-0 border-b border-gray-200 text-[10px]">
+                                <tr>
+                                    <th class="p-2 text-center">No</th>
+                                    <th class="p-2">Waktu Uji</th>
+                                    <th class="p-2 text-center">Selisih (t)</th>
+                                    <th class="p-2 text-center">Kecepatan (v)</th>
+                                    <th class="p-2 text-center text-amber-600 bg-amber-50">Viskositas (µ)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabel_pengujian" class="divide-y divide-gray-200 text-gray-600 font-medium">
+                                <tr id="no_data_row">
+                                    <td colspan="5" class="p-8 text-center text-gray-400 italic">Belum ada data pengujian masuk...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-5 flex flex-col space-y-4">
+                
+                <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 shadow-inner">
+                    <h3 class="text-gray-700 font-bold text-xs uppercase mb-3 tracking-wider flex items-center">
+                        ⚙️ Parameter Nilai Tetap (Hukum Stokes)
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block text-gray-500 mb-1">Jari-jari bola (r) [m]:</label>
+                            <input type="number" id="param_r" step="0.0001" value="0.005" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 mb-1">Gravitasi (g) [m/s²]:</label>
+                            <input type="number" id="param_g" step="0.1" value="9.8" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 mb-1">ρ Benda Bola [kg/m³]:</label>
+                            <input type="number" id="param_rho_bola" value="7850" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 mb-1">ρ Cairan Oli [kg/m³]:</label>
+                            <input type="number" id="param_rho_oli" value="890" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-gray-500 mb-1">Jarak Antar Sensor [meter]:</label>
+                            <input type="number" id="param_jarak" step="0.01" value="0.1" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#0b54b2] rounded-2xl p-4 text-center border-4 border-amber-500 shadow-lg">
+                    <div class="bg-amber-500 text-white font-bold text-xs py-1 px-4 rounded-full inline-block uppercase tracking-wider mb-1">
+                        Hasil Viskositas Dinamik (µ)
+                    </div>
+                    <div class="text-white font-black text-4xl my-1 tracking-tight">
+                        <span id="selisih_display">0.000</span> <span class="text-amber-400 text-xl">kg·m/s</span>
+                    </div>
+                    <div class="text-blue-100 text-[10px] font-semibold tracking-widest uppercase">Berdasarkan Perhitungan Hukum Stokes Real-time</div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex-1 min-h-[160px]">
+                    <h3 class="text-[#0b54b2] text-center font-bold text-xs uppercase mb-1 tracking-wider">Grafik Viskositas Real-time</h3>
+                    <div class="w-full h-36">
+                        <canvas id="viscosityChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-2 text-right text-xs text-gray-400 border-t border-gray-100">
+            Realtime Database Connection Status: <span class="text-green-500 font-bold">🟢 Connected</span>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_N4MTq20AM-AiSVw2ztSE8HSuBCfAyTc",
+            authDomain: "skripsi-2026-5d0da.firebaseapp.com",
+            databaseURL: "https://skripsi-2026-5d0da-default-rtdb.firebaseio.com",
+            projectId: "skripsi-2026-5d0da",
+            storageBucket: "skripsi-2026-5d0da.firebasestorage.app",
+            messagingSenderId: "544532820984",
+            appId: "1:544532820984:web:75c274ad3f6fb2196b5c0d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let nomorPengujian = 0;
+        let lastTimestamp1 = null; 
+
+        // --- CHART CONFIGURATION (Chart.js) ---
+        const ctx = document.getElementById('viscosityChart').getContext('2d');
+        const viscosityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1', '2', '3', '4', '5', '6'],
+                datasets: [{
+                    label: 'Viskositas (kg.m/s)',
+                    data: [0, 0, 0, 0, 0, 0], 
+                    borderColor: '#f59e0b', 
+                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4, 
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { ticks: { font: { size: 9 } } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
+            }
+        });
+
+        function formatJam(epoch) {
+            if (!epoch || epoch === 0) return "-";
+            const d = new Date(epoch * 1000);
+            return d.toLocaleTimeString('id-ID');
+        }
+
+        // --- REALTIME DATA UPDATE & STOKES CALCULATION ---
+        const dataRef = ref(db, 'data');
+        onValue(dataRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const w1 = data.waktu1_utc || 0;
+                const w2 = data.waktu2_utc || 0;
+                
+                // Menggunakan selisih_utc murni positif dari Firebase
+                const selisih = data.selisih_utc !== undefined ? data.selisih_utc : 0;
+
+                // Tampilkan data waktu saat ini di panel atas
+                document.getElementById('waktu1_display').innerText = `TIME: ${w1} SECONDS`;
+                document.getElementById('waktu2_display').innerText = `TIME: ${w2} SECONDS`;
+                
+                // Ambil nilai variabel dari elemen input HTML parameter
+                const r = parseFloat(document.getElementById('param_r').value) || 0.005;
+                const g = parseFloat(document.getElementById('param_g').value) || 9.8;
+                const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 0;
+                const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 0;
+                const s = parseFloat(document.getElementById('param_jarak').value) || 0.1;
+
+                // Hitung Kecepatan v = s / t
+                // Jika selisih 0, kecepatan di-set 0 untuk menghindari nilai pembagian tak terhingga (infinity)
+                const v = selisih > 0 ? (s / selisih) : 0;
+
+                // Hitung Viskositas Dinamik Menggunakan Rumus Jurnal Stokes
+                let mu = 0;
+                if (v > 0) {
+                    const pembilang = 2 * Math.pow(r, 2) * g * (rho_bola - rho_oli);
+                    const penyebut = 9 * v;
+                    mu = pembilang / penyebut;
+                }
+
+                // Tampilkan hasil viskositas terhitung ke Big Box utama (pembulatan 4 desimal)
+                document.getElementById('selisih_display').innerText = mu.toFixed(4);
+
+                // LOGIKA PENCATATAN BARIS TABEL
+                if (w1 !== 0 && w1 !== lastTimestamp1) {
+                    lastTimestamp1 = w1; 
+                    nomorPengujian++;
+
+                    const noDataRow = document.getElementById('no_data_row');
+                    if (noDataRow) noDataRow.remove();
+
+                    const tbody = document.getElementById('tabel_pengujian');
+                    const newRow = document.createElement('tr');
+                    newRow.className = "hover:bg-gray-50 border-b border-gray-100 transition-colors";
+                    
+                    // Isi baris tabel dengan rekam data spesifik saat pengujian ini terjadi
+                    newRow.innerHTML = `
+                        <td class="p-2 text-center font-bold text-gray-400">${nomorPengujian}</td>
+                        <td class="p-2">${formatJam(w1)} <span class="text-[9px] text-gray-400 block">Raw: ${w1}s</span></td>
+                        <td class="p-2 text-center font-semibold">${selisih} s</td>
+                        <td class="p-2 text-center text-blue-600">${v.toFixed(3)} m/s</td>
+                        <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} kg·m/s</td>
+                    `;
+                    
+                    tbody.insertBefore(newRow, tbody.firstChild);
+
+                    // Update struktur data grafik riwayat pengujian
+                    viscosityChart.data.datasets[0].data.shift();
+                    viscosityChart.data.datasets[0].data.push(mu.toFixed(4));
+                    viscosityChart.update();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
