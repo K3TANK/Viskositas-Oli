@@ -89,7 +89,7 @@
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <div>
                             <label class="block text-gray-500 mb-1">Jari-jari bola (r) [m]:</label>
-                            <input type="number" id="param_r" step="0.0001" value="0.005" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_r" step="0.0001" value="0.0025" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">Gravitasi (g) [m/s²]:</label>
@@ -97,15 +97,15 @@
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">ρ Benda Bola [kg/m³]:</label>
-                            <input type="number" id="param_rho_bola" value="7850" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_rho_bola" value="13369" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">ρ Cairan Oli [kg/m³]:</label>
-                            <input type="number" id="param_rho_oli" value="890" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_rho_oli" value="971.4" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">Jarak Antar Sensor [meter]:</label>
-                            <input type="number" id="param_jarak" step="0.01" value="0.1" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_jarak" step="0.01" value="0.445" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-blue-600 font-bold mb-1">Suhu Oli Manual (°C):</label>
@@ -119,15 +119,37 @@
                         Hasil Viskositas Dinamik (µ)
                     </div>
                     <div class="text-white font-black text-4xl my-1 tracking-tight">
-                        <span id="selisih_display">0.000</span> <span class="text-amber-400 text-xl">kg·m/s</span>
+                        <span id="selisih_display">0.0000</span> <span class="text-amber-400 text-xl">Pa·s</span>
                     </div>
                     <div class="text-blue-100 text-[10px] font-semibold tracking-widest uppercase">Berdasarkan Perhitungan Hukum Stokes Real-time</div>
                 </div>
 
-                <div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex-1 min-h-[160px]">
+                <div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm min-h-[140px]">
                     <h3 class="text-[#0b54b2] text-center font-bold text-xs uppercase mb-1 tracking-wider">Grafik Viskositas Real-time</h3>
-                    <div class="w-full h-36">
+                    <div class="w-full h-32">
                         <canvas id="viscosityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 shadow-sm">
+                    <h3 class="text-amber-800 font-bold text-xs uppercase mb-2 tracking-wider flex items-center">
+                        📋 Kesimpulan Klasifikasi & Karakteristik Oli
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div class="bg-white p-2.5 rounded-lg border border-amber-200">
+                            <span class="text-gray-500 block mb-0.5">Viskositas Kinematik:</span>
+                            <span id="kinematik_display" class="text-xl font-black text-gray-800">0.00 cSt</span>
+                        </div>
+                        <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex flex-col justify-center">
+                            <span class="text-gray-500 block mb-0.5">Kategori Standar:</span>
+                            <span id="kategori_display" class="text-sm font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block text-center">
+                                Menunggu Data...
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mt-2.5 bg-white p-2.5 rounded-lg border border-amber-200 text-[11px] text-gray-600 leading-relaxed">
+                        <span class="font-bold text-gray-700 block mb-0.5">Catatan Analisis:</span>
+                        <span id="analisis_display">Silakan lakukan pengujian drop-ball untuk mendapatkan kesimpulan tipe oli.</span>
                     </div>
                 </div>
 
@@ -173,7 +195,7 @@
             data: {
                 labels: ['1', '2', '3', '4', '5', '6'],
                 datasets: [{
-                    label: 'Viskositas (kg.m/s)',
+                    label: 'Viskositas (Pa·s)',
                     data: [0, 0, 0, 0, 0, 0], 
                     borderColor: '#f59e0b', 
                     backgroundColor: 'rgba(245, 158, 11, 0.15)',
@@ -231,26 +253,58 @@
                 document.getElementById('waktu1_display').innerText = w1 > 0 ? `TIME: ${w1} SECONDS` : "TIME: -- SECONDS";
                 document.getElementById('waktu2_display').innerText = w2 > 0 ? `TIME: ${w2} SECONDS` : "TIME: -- SECONDS";
                 
-                const r = parseFloat(document.getElementById('param_r').value) || 0.005;
+                const r = parseFloat(document.getElementById('param_r').value) || 0.0025;
                 const g = parseFloat(document.getElementById('param_g').value) || 9.8;
-                const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 0;
-                const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 0;
+                const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 13369;
+                const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 971.4;
                 const s = parseFloat(document.getElementById('param_jarak').value) || 0.1;
                 const suhu = parseFloat(document.getElementById('param_suhu').value) || 25.0;
 
+                // Logika Kecepatan (v)
                 const v = selisih > 0 ? (s / selisih) : 0;
 
-                let mu = 0;
+                let mu = 0; // Viskositas Dinamis (Pa.s)
+                let nu_cSt = 0; // Viskositas Kinematik (cSt)
+
                 if (v > 0) {
                     const pembilang = 2 * Math.pow(r, 2) * g * (rho_bola - rho_oli);
                     const penyebut = 9 * v;
                     mu = pembilang / penyebut;
+
+                    if (rho_oli > 0) {
+                        // Konversi ke centiStokes (cSt)
+                        nu_cSt = (mu * 1000000)/rho_oli;
+                    }
                 }
 
+                // Update UI Utama secara Real-time
                 if (mu > 0) {
                     document.getElementById('selisih_display').innerText = mu.toFixed(4);
+                    document.getElementById('kinematik_display').innerText = nu_cSt.toFixed(2) + " cSt";
+
+                    // Penyempurnaan Threshold agar 86.88 cSt masuk kategori Medium kearah SAE 30 / ISO VG 68-100 dengan tepat
+                    let kategori = "";
+                    let analisis = "";
+
+                    if (nu_cSt < 30) {
+                        kategori = "Encer (Spindle Oil)";
+                        analisis = "Kekentalan rendah. Umumnya setara dengan oli mesin jahit atau minyak hidrolik sangat ringan (ISO VG 10-22).";
+                    } else if (nu_cSt >= 30 && nu_cSt < 68) {
+                        kategori = "ISO VG 32 / 46 (Hidrolik)";
+                        analisis = "Kekentalan sedang-rendah. Sangat cocok dengan spesifikasi Oli Hidrolik Industri standar pengerjaan presisi atau oli mesin encer SAE 10W.";
+                    } else if (nu_cSt >= 68 && nu_cSt <= 120) {
+                        kategori = "ISO VG 68 / 100 (Medium)";
+                        analisis = `Kekentalan terukur berada pada rentang medium kental (${nu_cSt.toFixed(2)} cSt). Karakteristik ini ideal mendeskripsikan pelumas mesin transmisi industri sedang atau oli kendaraan bermotor jenis SAE 30 / SAE 40 pada suhu ruang.`;
+                    } else {
+                        kategori = "Gear Oil (Kental)";
+                        analisis = "Kekentalan tinggi. Masuk dalam rentang pelumas sistem roda gigi berat (ISO VG 150 ke atas) atau Oli Gardan Kendaraan (SAE 80W / 90).";
+                    }
+
+                    document.getElementById('kategori_display').innerText = kategori;
+                    document.getElementById('analisis_display').innerText = analisis;
                 }
 
+                // Simpan Riwayat Pengujian ke Tabel & Grafik
                 if (w1 > 0 && w2 > 0 && selisih > 0 && !isDataSaved) {
                     isDataSaved = true; 
                     nomorPengujian++;
@@ -269,7 +323,7 @@
                         <td class="p-2 text-center font-semibold text-blue-600">${suhu.toFixed(1)} °C</td>
                         <td class="p-2 text-center font-semibold text-gray-700">${selisih} s</td>
                         <td class="p-2 text-center text-blue-600">${v.toFixed(3)} m/s</td>
-                        <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} kg·m/s</td>
+                        <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} Pa·s</td>
                     `;
                     
                     tbody.insertBefore(newRow, tbody.firstChild);
@@ -285,25 +339,16 @@
             }
         });
 
-        // ==================================================
-        // TAMBAHAN: FUNGSI UTK EXPORT DATA KE EXCEL (.XLSX)
-        // ==================================================
+        // --- BUTTON EXPORT EXCEL ---
         document.getElementById('btn_export').addEventListener('click', () => {
-            // Cek apakah tabel masih kosong atau hanya berisi baris default "Belum ada data"
             if (document.getElementById('no_data_row')) {
                 alert('Gagal Export: Belum ada data pengujian yang terekam!');
                 return;
             }
-
-            // Membaca tabel HTML dan mengubahnya menjadi lembar kerja (Worksheet)
             const tableElement = document.getElementById('tabel_seluruh_data');
             const wb = XLSX.utils.table_to_book(tableElement, { sheet: "Data Viskositas" });
-
-            // Mengenerate nama file berdasarkan tanggal saat ini
             const tgl = new Date().toISOString().slice(0,10);
             const namaFile = `Log_Viskositas_Stokes_${tgl}.xlsx`;
-
-            // Proses unduhan file langsung ke komputer pengguna
             XLSX.writeFile(wb, namaFile);
         });
     </script>
