@@ -21,6 +21,7 @@
 
         <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
             
+            <!-- KOLOM KIRI: SENSOR & TABEL LOG -->
             <div class="lg:col-span-7 flex flex-col space-y-4">
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -66,7 +67,7 @@
                                     <th class="p-2 text-center">Suhu (°C)</th>
                                     <th class="p-2 text-center">Selisih (t)</th>
                                     <th class="p-2 text-center">Kecepatan (v)</th>
-                                    <th class="p-2 text-center text-amber-600 bg-amber-50">Viskositas (µ)</th>
+                                    <th class="p-2 text-center text-amber-600 bg-amber-50">Viskositas (µ) [Kg/(m.s)]</th>
                                 </tr>
                             </thead>
                             <tbody id="tabel_pengujian" class="divide-y divide-gray-200 text-gray-600 font-medium">
@@ -80,6 +81,7 @@
 
             </div>
 
+            <!-- KOLOM KANAN: PARAMETER, UTAMA & GRAFIK -->
             <div class="lg:col-span-5 flex flex-col space-y-4">
                 
                 <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 shadow-inner">
@@ -119,37 +121,15 @@
                         Hasil Viskositas Dinamik (µ)
                     </div>
                     <div class="text-white font-black text-4xl my-1 tracking-tight">
-                        <span id="selisih_display">0.0000</span> <span class="text-amber-400 text-xl">kg/m.s</span>
+                        <span id="selisih_display">0.0000</span> <span class="text-amber-400 text-xl">Kg/(m.s)</span>
                     </div>
                     <div class="text-blue-100 text-[10px] font-semibold tracking-widest uppercase">Berdasarkan Perhitungan Hukum Stokes Real-time</div>
                 </div>
 
-                <div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm min-h-[140px]">
+                <div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex-1 flex flex-col justify-center min-h-[160px]">
                     <h3 class="text-[#0b54b2] text-center font-bold text-xs uppercase mb-1 tracking-wider">Grafik Viskositas Real-time</h3>
-                    <div class="w-full h-32">
+                    <div class="w-full h-36">
                         <canvas id="viscosityChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 shadow-sm">
-                    <h3 class="text-amber-800 font-bold text-xs uppercase mb-2 tracking-wider flex items-center">
-                        📋 Kesimpulan Klasifikasi & Karakteristik Oli
-                    </h3>
-                    <div class="grid grid-cols-2 gap-4 text-xs">
-                        <div class="bg-white p-2.5 rounded-lg border border-amber-200">
-                            <span class="text-gray-500 block mb-0.5">Viskositas Kinematik:</span>
-                            <span id="kinematik_display" class="text-xl font-black text-gray-800">0.00 cSt</span>
-                        </div>
-                        <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex flex-col justify-center">
-                            <span class="text-gray-500 block mb-0.5">Kategori Standar:</span>
-                            <span id="kategori_display" class="text-sm font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block text-center">
-                                Menunggu Data...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mt-2.5 bg-white p-2.5 rounded-lg border border-amber-200 text-[11px] text-gray-600 leading-relaxed">
-                        <span class="font-bold text-gray-700 block mb-0.5">Catatan Analisis:</span>
-                        <span id="analisis_display">Silakan lakukan pengujian drop-ball untuk mendapatkan kesimpulan tipe oli.</span>
                     </div>
                 </div>
 
@@ -195,7 +175,7 @@
             data: {
                 labels: ['1', '2', '3', '4', '5', '6'],
                 datasets: [{
-                    label: 'Viskositas (Pa·s)',
+                    label: 'Viskositas Kg/(m.s)',
                     data: [0, 0, 0, 0, 0, 0], 
                     borderColor: '#f59e0b', 
                     backgroundColor: 'rgba(245, 158, 11, 0.15)',
@@ -263,45 +243,17 @@
                 // Logika Kecepatan (v)
                 const v = selisih > 0 ? (s / selisih) : 0;
 
-                let mu = 0; // Viskositas Dinamis (Pa.s)
-                let nu_cSt = 0; // Viskositas Kinematik (cSt)
+                let mu = 0; // Viskositas Dinamis
 
                 if (v > 0) {
                     const pembilang = 2 * Math.pow(r, 2) * g * (rho_bola - rho_oli);
                     const penyebut = 9 * v;
                     mu = pembilang / penyebut;
-
-                    if (rho_oli > 0) {
-                        // Konversi ke centiStokes (cSt)
-                        nu_cSt = (mu * 1000000)/rho_oli;
-                    }
                 }
 
                 // Update UI Utama secara Real-time
                 if (mu > 0) {
                     document.getElementById('selisih_display').innerText = mu.toFixed(4);
-                    document.getElementById('kinematik_display').innerText = nu_cSt.toFixed(2) + " cSt";
-
-                    // Penyempurnaan Threshold agar 86.88 cSt masuk kategori Medium kearah SAE 30 / ISO VG 68-100 dengan tepat
-                    let kategori = "";
-                    let analisis = "";
-
-                    if (nu_cSt < 30) {
-                        kategori = "Encer (Spindle Oil)";
-                        analisis = "Kekentalan rendah. Umumnya setara dengan oli mesin jahit atau minyak hidrolik sangat ringan (ISO VG 10-22).";
-                    } else if (nu_cSt >= 30 && nu_cSt < 68) {
-                        kategori = "ISO VG 32 / 46 (Hidrolik)";
-                        analisis = "Kekentalan sedang-rendah. Sangat cocok dengan spesifikasi Oli Hidrolik Industri standar pengerjaan presisi atau oli mesin encer SAE 10W.";
-                    } else if (nu_cSt >= 68 && nu_cSt <= 120) {
-                        kategori = "ISO VG 68 / 100 (Medium)";
-                        analisis = `Kekentalan terukur berada pada rentang medium kental (${nu_cSt.toFixed(2)} cSt). Karakteristik ini ideal mendeskripsikan pelumas mesin transmisi industri sedang atau oli kendaraan bermotor jenis SAE 30 / SAE 40 pada suhu ruang.`;
-                    } else {
-                        kategori = "Gear Oil (Kental)";
-                        analisis = "Kekentalan tinggi. Masuk dalam rentang pelumas sistem roda gigi berat (ISO VG 150 ke atas) atau Oli Gardan Kendaraan (SAE 80W / 90).";
-                    }
-
-                    document.getElementById('kategori_display').innerText = kategori;
-                    document.getElementById('analisis_display').innerText = analisis;
                 }
 
                 // Simpan Riwayat Pengujian ke Tabel & Grafik
@@ -323,7 +275,7 @@
                         <td class="p-2 text-center font-semibold text-blue-600">${suhu.toFixed(1)} °C</td>
                         <td class="p-2 text-center font-semibold text-gray-700">${selisih} s</td>
                         <td class="p-2 text-center text-blue-600">${v.toFixed(3)} m/s</td>
-                        <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} Pa·s</td>
+                        <td class="p-2 text-center font-bold text-amber-700 bg-amber-50/50">${mu.toFixed(4)} Kg/(m.s)</td>
                     `;
                     
                     tbody.insertBefore(newRow, tbody.firstChild);
@@ -349,7 +301,7 @@
             const wb = XLSX.utils.table_to_book(tableElement, { sheet: "Data Viskositas" });
             const tgl = new Date().toISOString().slice(0,10);
             const namaFile = `Log_Viskositas_Stokes_${tgl}.xlsx`;
-            XLSX.writeFile(wb, namaFile);
+            XXLSX.writeFile(wb, namaFile);
         });
     </script>
 </body>
