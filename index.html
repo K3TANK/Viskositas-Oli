@@ -95,15 +95,15 @@
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">Gravitasi (g) [m/s²]:</label>
-                            <input type="number" id="param_g" step="0.1" value="9.8" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_g" step="0.1" value="9.81" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">ρ Benda Bola [kg/m³]:</label>
-                            <input type="number" id="param_rho_bola" value="13369" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_rho_bola" value="13375.81" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">ρ Cairan Oli [kg/m³]:</label>
-                            <input type="number" id="param_rho_oli" value="971.4" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
+                            <input type="number" id="param_rho_oli" value="927.7151" class="w-full border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 focus:outline-blue-500">
                         </div>
                         <div>
                             <label class="block text-gray-500 mb-1">Jarak Antar Sensor [meter]:</label>
@@ -111,7 +111,7 @@
                         </div>
                         <div>
                             <label class="block text-blue-600 font-bold mb-1">Suhu Oli Manual (°C):</label>
-                            <input type="number" id="param_suhu" step="0.1" value="25.0" class="w-full border border-blue-400 bg-blue-50 rounded px-2 py-1 font-bold text-blue-700 focus:outline-blue-600">
+                            <input type="number" id="param_suhu" step="0.1" value="40.0" class="w-full border border-blue-400 bg-blue-50 rounded px-2 py-1 font-bold text-blue-700 focus:outline-blue-600">
                         </div>
                     </div>
                 </div>
@@ -235,11 +235,11 @@
                 document.getElementById('waktu2_display').innerText = w2 > 0 ? `TIME: ${w2} SECONDS` : "TIME: -- SECONDS";
                 
                 const r = parseFloat(document.getElementById('param_r').value) || 0.0025;
-                const g = parseFloat(document.getElementById('param_g').value) || 9.8;
-                const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 13369;
-                const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 971.4;
+                const g = parseFloat(document.getElementById('param_g').value) || 9.81;
+                const rho_bola = parseFloat(document.getElementById('param_rho_bola').value) || 13375.81;
+                const rho_oli = parseFloat(document.getElementById('param_rho_oli').value) || 927.7151;
                 const s = parseFloat(document.getElementById('param_jarak').value) || 0.1;
-                const suhu = parseFloat(document.getElementById('param_suhu').value) || 25.0;
+                const suhu = parseFloat(document.getElementById('param_suhu').value) || 40.0;
 
                 const v = selisih > 0 ? (s / selisih) : 0;
                 let mu = 0; 
