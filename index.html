@@ -301,7 +301,7 @@
             const wb = XLSX.utils.table_to_book(tableElement, { sheet: "Data Viskositas" });
             const tgl = new Date().toISOString().slice(0,10);
             const namaFile = `Log_Viskositas_Stokes_${tgl}.xlsx`;
-            XXLSX.writeFile(wb, namaFile);
+            XLSX.writeFile(wb, namaFile); 
         });
     </script>
 </body>
