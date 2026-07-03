@@ -151,6 +151,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
+        // PERINGATAN: Batasi API Key ini di Google Cloud Console agar hanya bisa diakses dari domain GitHub Pages kamu!
         const firebaseConfig = {
             apiKey: "AIzaSyD_N4MTq20AM-AiSVw2ztSE8HSuBCfAyTc",
             authDomain: "skripsi-2026-5d0da.firebaseapp.com",
@@ -240,10 +241,8 @@
                 const s = parseFloat(document.getElementById('param_jarak').value) || 0.1;
                 const suhu = parseFloat(document.getElementById('param_suhu').value) || 25.0;
 
-                // Logika Kecepatan (v)
                 const v = selisih > 0 ? (s / selisih) : 0;
-
-                let mu = 0; // Viskositas Dinamis
+                let mu = 0; 
 
                 if (v > 0) {
                     const pembilang = 2 * Math.pow(r, 2) * g * (rho_bola - rho_oli);
@@ -251,12 +250,10 @@
                     mu = pembilang / penyebut;
                 }
 
-                // Update UI Utama secara Real-time
                 if (mu > 0) {
                     document.getElementById('selisih_display').innerText = mu.toFixed(4);
                 }
 
-                // Simpan Riwayat Pengujian ke Tabel & Grafik
                 if (w1 > 0 && w2 > 0 && selisih > 0 && !isDataSaved) {
                     isDataSaved = true; 
                     nomorPengujian++;
@@ -301,7 +298,7 @@
             const wb = XLSX.utils.table_to_book(tableElement, { sheet: "Data Viskositas" });
             const tgl = new Date().toISOString().slice(0,10);
             const namaFile = `Log_Viskositas_Stokes_${tgl}.xlsx`;
-            XLSX.writeFile(wb, namaFile); 
+            XLSX.writeFile(wb, namaFile);
         });
     </script>
 </body>
